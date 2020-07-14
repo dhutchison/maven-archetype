@@ -271,9 +271,9 @@ public class DefaultArchetypeArtifactManager
     @Override
     public String getPostGenerationScript( File archetypeFile ) throws UnknownArchetype
     {
-        try ( ZipFile zipFile = getArchetypeZipFile( archetypeFile );
-                        Reader reader = getDescriptorReader( zipFile, Constants.ARCHETYPE_POST_GENERATION_SCRIPT ) )
+        try ( ZipFile zipFile = getArchetypeZipFile( archetypeFile ) )
         {
+            Reader reader = getDescriptorReader( zipFile, Constants.ARCHETYPE_POST_GENERATION_SCRIPT );
             return reader == null ? null : IOUtils.toString( reader );
         }
         catch ( IOException e )
