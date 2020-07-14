@@ -1219,7 +1219,7 @@ public class MavenJDOMWriter
         if ( parentDom.getChildCount() > 0 )
         {
             Xpp3Dom[] childs = parentDom.getChildren();
-            Collection domChilds = new ArrayList();
+            Collection<Xpp3Dom> domChilds = new ArrayList<>();
             for ( int i = 0; i < childs.length; i++ )
             {
                 domChilds.add( childs[i] );

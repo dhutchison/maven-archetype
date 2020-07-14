@@ -114,9 +114,8 @@ public class DefaultFilesetArchetypeGenerator
                     throw new ArchetypeNotConfigured( "No archetype was chosen.", null );
                 }
 
-                StringBuilder exceptionMessage = new StringBuilder(
-                    "Archetype " + request.getArchetypeGroupId() + ":" + request.getArchetypeArtifactId() + ":"
-                        + request.getArchetypeVersion() + " is not configured" );
+                StringBuilder exceptionMessage = new StringBuilder( "Archetype " + request.getArchetypeGroupId() + ":"
+                    + request.getArchetypeArtifactId() + ":" + request.getArchetypeVersion() + " is not configured" );
 
                 List<String> missingProperties = new ArrayList<>( 0 );
                 for ( RequiredProperty requiredProperty : archetypeDescriptor.getRequiredProperties() )
@@ -142,114 +141,121 @@ public class DefaultFilesetArchetypeGenerator
 
             List<String> archetypeResources = archetypeArtifactManager.getFilesetArchetypeResources( archetypeFile );
 
-            ZipFile archetypeZipFile = archetypeArtifactManager.getArchetypeZipFile( archetypeFile );
-
-            ClassLoader archetypeJarLoader = archetypeArtifactManager.getArchetypeJarLoader( archetypeFile );
-
-            Thread.currentThread().setContextClassLoader( archetypeJarLoader );
-
-            if ( archetypeDescriptor.isPartial() )
+            try ( ZipFile archetypeZipFile = archetypeArtifactManager.getArchetypeZipFile( archetypeFile ) )
             {
-                getLogger().debug( "Processing partial archetype " + archetypeDescriptor.getName() );
-                if ( outputDirectoryFile.exists() )
-                {
-                    if ( !pom.exists() )
-                    {
-                        throw new PomFileExists( "This is a partial archetype and the pom.xml file doesn't exist." );
-                    }
+                ClassLoader archetypeJarLoader = archetypeArtifactManager.getArchetypeJarLoader( archetypeFile );
 
-                    processPomWithMerge( context, pom, "" );
+                Thread.currentThread().setContextClassLoader( archetypeJarLoader );
 
-                    processArchetypeTemplatesWithWarning( archetypeDescriptor, archetypeResources, archetypeZipFile, "",
-                                                          context, packageName, outputDirectoryFile );
-                }
-                else
+                if ( archetypeDescriptor.isPartial() )
                 {
-                    if ( basedirPom.exists() )
+                    getLogger().debug( "Processing partial archetype " + archetypeDescriptor.getName() );
+                    if ( outputDirectoryFile.exists() )
                     {
-                        processPomWithMerge( context, basedirPom, "" );
+                        if ( !pom.exists() )
+                        {
+                            throw new PomFileExists( 
+                                    "This is a partial archetype and the pom.xml file doesn't exist." );
+                        }
+
+                        processPomWithMerge( context, pom, "" );
 
                         processArchetypeTemplatesWithWarning( archetypeDescriptor, archetypeResources, archetypeZipFile,
-                                                              "", context, packageName,
-                                                              new File( request.getOutputDirectory() ) );
+                                                              "", context, packageName, outputDirectoryFile );
                     }
                     else
                     {
-                        processPom( context, pom, "" );
+                        if ( basedirPom.exists() )
+                        {
+                            processPomWithMerge( context, basedirPom, "" );
 
-                        processArchetypeTemplates( archetypeDescriptor, archetypeResources, archetypeZipFile, "",
-                                                   context, packageName, outputDirectoryFile );
+                            processArchetypeTemplatesWithWarning( archetypeDescriptor, archetypeResources,
+                                                                  archetypeZipFile, "", context, packageName,
+                                                                  new File( request.getOutputDirectory() ) );
+                        }
+                        else
+                        {
+                            processPom( context, pom, "" );
+
+                            processArchetypeTemplates( archetypeDescriptor, archetypeResources, archetypeZipFile, "",
+                                                       context, packageName, outputDirectoryFile );
+                        }
+                    }
+
+                    if ( archetypeDescriptor.getModules().size() > 0 )
+                    {
+                        getLogger().info( "Modules ignored in partial mode" );
                     }
                 }
-
-                if ( archetypeDescriptor.getModules().size() > 0 )
+                else
                 {
-                    getLogger().info( "Modules ignored in partial mode" );
+                    getLogger().debug( "Processing complete archetype " + archetypeDescriptor.getName() );
+                    if ( outputDirectoryFile.exists() && pom.exists() )
+                    {
+                        throw new ProjectDirectoryExists( "A Maven project already exists in the directory "
+                            + outputDirectoryFile.getPath() );
+                    }
+
+                    if ( outputDirectoryFile.exists() )
+                    {
+                        getLogger().warn( "The directory " + outputDirectoryFile.getPath() + " already exists." );
+                    }
+
+                    context.put( "rootArtifactId", artifactId );
+
+                    processFilesetModule( artifactId, artifactId, archetypeResources, pom, archetypeZipFile, "",
+                                          basedirPom, outputDirectoryFile, packageName, archetypeDescriptor, context );
+                }
+
+                String postGenerationScript = archetypeArtifactManager.getPostGenerationScript( archetypeFile );
+                if ( postGenerationScript != null )
+                {
+                    getLogger().info( "Executing " + Constants.ARCHETYPE_POST_GENERATION_SCRIPT
+                        + " post-generation script" );
+
+                    Binding binding = new Binding();
+
+                    final Properties archetypeGeneratorProperties = new Properties();
+                    archetypeGeneratorProperties.putAll( System.getProperties() );
+
+                    if ( request.getProperties() != null )
+                    {
+                        archetypeGeneratorProperties.putAll( request.getProperties() );
+                    }
+
+                    for ( Map.Entry<Object, Object> entry : archetypeGeneratorProperties.entrySet() )
+                    {
+                        binding.setVariable( entry.getKey().toString(), entry.getValue() );
+                    }
+
+                    binding.setVariable( "request", request );
+
+                    GroovyShell shell = new GroovyShell( binding );
+                    shell.evaluate( postGenerationScript );
+                }
+
+                // ----------------------------------------------------------------------
+                // Log message on OldArchetype creation
+                // ----------------------------------------------------------------------
+                if ( getLogger().isInfoEnabled() )
+                {
+                    getLogger().info( "Project created from Archetype in dir: "
+                        + outputDirectoryFile.getAbsolutePath() );
                 }
             }
-            else
+            catch ( IOException | XmlPullParserException | ParserConfigurationException | TransformerException
+                            | SAXException e )
             {
-                getLogger().debug( "Processing complete archetype " + archetypeDescriptor.getName() );
-                if ( outputDirectoryFile.exists() && pom.exists() )
-                {
-                    throw new ProjectDirectoryExists(
-                        "A Maven project already exists in the directory " + outputDirectoryFile.getPath() );
-                }
-
-                if ( outputDirectoryFile.exists() )
-                {
-                    getLogger().warn( "The directory " + outputDirectoryFile.getPath() + " already exists." );
-                }
-
-                context.put( "rootArtifactId", artifactId );
-
-                processFilesetModule( artifactId, artifactId, archetypeResources, pom, archetypeZipFile, "", basedirPom,
-                                      outputDirectoryFile, packageName, archetypeDescriptor, context );
+                throw new ArchetypeGenerationFailure( e );
             }
-
-            String postGenerationScript = archetypeArtifactManager.getPostGenerationScript( archetypeFile );
-            if ( postGenerationScript != null )
+            finally
             {
-                getLogger().info( "Executing " + Constants.ARCHETYPE_POST_GENERATION_SCRIPT
-                    + " post-generation script" );
-
-                Binding binding = new Binding();
-
-                final Properties archetypeGeneratorProperties = new Properties();
-                archetypeGeneratorProperties.putAll( System.getProperties() );
-
-                if ( request.getProperties() != null )
-                {
-                    archetypeGeneratorProperties.putAll( request.getProperties() );
-                }
-
-                for ( Map.Entry<Object, Object> entry : archetypeGeneratorProperties.entrySet() )
-                {
-                    binding.setVariable( entry.getKey().toString(), entry.getValue() );
-                }
-
-                binding.setVariable( "request", request );
-
-                GroovyShell shell = new GroovyShell( binding );
-                shell.evaluate( postGenerationScript );
+                Thread.currentThread().setContextClassLoader( old );
             }
-
-            // ----------------------------------------------------------------------
-            // Log message on OldArchetype creation
-            // ----------------------------------------------------------------------
-            if ( getLogger().isInfoEnabled() )
-            {
-                getLogger().info( "Project created from Archetype in dir: " + outputDirectoryFile.getAbsolutePath() );
-            }
-        }
-        catch ( IOException | XmlPullParserException | ParserConfigurationException | TransformerException
-                | SAXException e )
-        {
-            throw new ArchetypeGenerationFailure( e );
         }
         finally
         {
-            Thread.currentThread().setContextClassLoader( old );
+
         }
     }
 

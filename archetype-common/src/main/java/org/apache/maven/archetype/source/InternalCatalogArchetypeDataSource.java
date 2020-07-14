@@ -26,7 +26,6 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.util.ReaderFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 
 /**
@@ -41,11 +40,9 @@ public class InternalCatalogArchetypeDataSource
     public ArchetypeCatalog getArchetypeCatalog( ProjectBuildingRequest buildingRequest )
         throws ArchetypeDataSourceException
     {
-        try
+        try ( Reader reader = ReaderFactory.newXmlReader( 
+                getClass().getClassLoader().getResourceAsStream( ARCHETYPE_CATALOG_FILENAME ) ) )
         {
-            InputStream in = getClass().getClassLoader().getResourceAsStream( ARCHETYPE_CATALOG_FILENAME );
-            Reader reader = ReaderFactory.newXmlReader( in );
-
             return readCatalog( reader );
         }
         catch ( IOException e )

@@ -212,28 +212,32 @@ public class XMLOutputter
      * The characters are printed using the encoding specified in the
      * constructor, or a default of UTF-8.
      *
-     * @param doc <code>Document</code> to format.
-     * @param out <code>OutputStream</code> to use.
-     * @throws IOException - if there's any problem writing.
+     * @param doc <code>Document</code> to format
+     * @param out <code>OutputStream</code> to use
+     * @throws IOException if there's any problem writing
      */
     public void output( Document doc, OutputStream out )
         throws IOException
     {
-        Writer writer = makeWriter( out );
-        output( doc, writer );  // output() flushes
+        try ( Writer writer = makeWriter( out ) ) 
+        {
+          output( doc, writer );  // output() flushes
+        }
     }
 
     /**
      * Print out the <code>{@link DocType}</code>.
      *
-     * @param doctype <code>DocType</code> to output.
-     * @param out     <code>OutputStream</code> to use.
+     * @param doctype <code>DocType</code> to use
+     * @param out     <code>OutputStream</code> to use
      */
     public void output( DocType doctype, OutputStream out )
         throws IOException
     {
-        Writer writer = makeWriter( out );
-        output( doctype, writer );  // output() flushes
+        try ( Writer writer = makeWriter( out ) ) 
+        {
+          output( doctype, writer );  // output() flushes
+        }
     }
 
     /**
@@ -241,14 +245,16 @@ public class XMLOutputter
      * its <code>{@link Attribute}</code>s, and all
      * contained (child) elements, etc.
      *
-     * @param element <code>Element</code> to output.
-     * @param out     <code>Writer</code> to use.
+     * @param element <code>Element</code> to output
+     * @param out     <code>Writer</code> to use
      */
     public void output( Element element, OutputStream out )
         throws IOException
     {
-        Writer writer = makeWriter( out );
-        output( element, writer );  // output() flushes
+        try ( Writer writer = makeWriter( out ) ) 
+        {
+          output( element, writer );  // output() flushes
+        }
     }
 
     /**
@@ -259,13 +265,15 @@ public class XMLOutputter
      * &lt;b&gt;fun&gt;!&lt;/description&gt;".
      *
      * @param element <code>Element</code> to output.
-     * @param out     <code>OutputStream</code> to use.
+     * @param out     <code>OutputStream</code> to write to
      */
     public void outputElementContent( Element element, OutputStream out )
         throws IOException
     {
-        Writer writer = makeWriter( out );
-        outputElementContent( element, writer );  // output() flushes
+        try ( Writer writer = makeWriter( out ) )
+        {
+            outputElementContent( element, writer );  // output() flushes
+        }
     }
 
     /**
@@ -275,26 +283,30 @@ public class XMLOutputter
      * &lt;b&gt;fun&gt;!&lt;/description&gt;".
      *
      * @param list <code>List</code> of nodes.
-     * @param out  <code>OutputStream</code> to use.
+     * @param out  <code>OutputStream</code> to write to
      */
     public void output( List<?> list, OutputStream out )
         throws IOException
     {
-        Writer writer = makeWriter( out );
-        output( list, writer );  // output() flushes
+        try ( Writer writer = makeWriter( out ) ) 
+        {
+            output( list, writer );  // output() flushes
+        }
     }
 
     /**
      * Print out a <code>{@link CDATA}</code> node.
      *
      * @param cdata <code>CDATA</code> to output.
-     * @param out   <code>OutputStream</code> to use.
+     * @param out   <code>OutputStream</code> to write to
      */
     public void output( CDATA cdata, OutputStream out )
         throws IOException
     {
-        Writer writer = makeWriter( out );
-        output( cdata, writer );  // output() flushes
+        try ( Writer writer = makeWriter( out ) )
+        {
+          output( cdata, writer );  // output() flushes
+        }
     }
 
     /**
@@ -302,56 +314,64 @@ public class XMLOutputter
      * the necessary entity escaping and whitespace stripping.
      *
      * @param text <code>Text</code> to output.
-     * @param out  <code>OutputStream</code> to use.
+     * @param out  <code>OutputStream</code> to write to
      */
     public void output( Text text, OutputStream out )
         throws IOException
     {
-        Writer writer = makeWriter( out );
-        output( text, writer );  // output() flushes
+        try ( Writer writer = makeWriter( out ) )
+        {
+          output( text, writer );  // output() flushes
+        }
     }
 
     /**
      * Print out a <code>{@link Comment}</code>.
      *
-     * @param comment <code>Comment</code> to output.
-     * @param out     <code>OutputStream</code> to use.
+     * @param comment <code>Comment</code> to output
+     * @param out     <code>OutputStream</code> to use
      */
     public void output( Comment comment, OutputStream out )
         throws IOException
     {
-        Writer writer = makeWriter( out );
-        output( comment, writer );  // output() flushes
+        try ( Writer writer = makeWriter( out ) )
+        {
+            output( comment, writer );  // output() flushes
+        }
     }
 
     /**
      * Print out a <code>{@link ProcessingInstruction}</code>.
      *
      * @param pi  <code>ProcessingInstruction</code> to output.
-     * @param out <code>OutputStream</code> to use.
+     * @param out <code>OutputStream</code> to write to
      */
     public void output( ProcessingInstruction pi, OutputStream out )
         throws IOException
     {
-        Writer writer = makeWriter( out );
-        output( pi, writer );  // output() flushes
+        try ( Writer writer = makeWriter( out ) )
+        {
+            output( pi, writer ); // output() flushes
+        }
     }
 
     /**
      * Print out a <code>{@link EntityRef}</code>.
      *
-     * @param entity <code>EntityRef</code> to output.
-     * @param out    <code>OutputStream</code> to use.
+     * @param entityReference <code>EntityRef</code> to output
+     * @param out    <code>OutputStream</code> to write to
      */
-    public void output( EntityRef entity, OutputStream out )
+    public void output( EntityRef entityReference, OutputStream out )
         throws IOException
     {
-        Writer writer = makeWriter( out );
-        output( entity, writer );  // output() flushes
+        try ( Writer writer = makeWriter( out ) )
+        {
+            output( entityReference, writer ); // output() flushes
+        }
     }
 
     /**
-     * Get an OutputStreamWriter, using prefered encoding
+     * Get an OutputStreamWriter, using preferred encoding
      * (see {@link Format#setEncoding}).
      */
     private Writer makeWriter( OutputStream out )
@@ -364,13 +384,6 @@ public class XMLOutputter
     private static Writer makeWriter( OutputStream out, String enc )
         throws java.io.UnsupportedEncodingException
     {
-        // "UTF-8" is not recognized before JDK 1.1.6, so we'll translate
-        // into "UTF8" which works with all JDKs.
-        if ( "UTF-8".equals( enc ) )
-        {
-            enc = "UTF8";
-        }
-
         Writer writer = new BufferedWriter( ( new OutputStreamWriter( new BufferedOutputStream( out ), enc ) ) );
         return writer;
     }
@@ -386,9 +399,9 @@ public class XMLOutputter
      * encodings other than UTF-8, we recommend using the method that
      * takes an OutputStream instead.</p>
      *
-     * @param doc <code>Document</code> to format.
-     * @param out <code>Writer</code> to use.
-     * @throws IOException - if there's any problem writing.
+     * @param doc <code>Document</code> to format
+     * @param out <code>Writer</code> to use
+     * @throws IOException if there's any problem writing
      */
     public void output( Document doc, Writer out )
         throws IOException
