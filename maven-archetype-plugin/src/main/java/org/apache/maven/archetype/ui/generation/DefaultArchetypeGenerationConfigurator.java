@@ -395,44 +395,8 @@ public class DefaultArchetypeGenerationConfigurator
                 return -1;
             }
 
-            return comparePropertyName( left, right );
-        }
-
-        private int comparePropertyName( String left, String right )
-        {
-            if ( "groupId".equals( left ) )
-            {
-                return -1;
-            }
-            if ( "groupId".equals( right ) )
-            {
-                return 1;
-            }
-            if ( "artifactId".equals( left ) )
-            {
-                return -1;
-            }
-            if ( "artifactId".equals( right ) )
-            {
-                return 1;
-            }
-            if ( "version".equals( left ) )
-            {
-                return -1;
-            }
-            if ( "version".equals( right ) )
-            {
-                return 1;
-            }
-            if ( "package".equals( left ) )
-            {
-                return -1;
-            }
-            if ( "package".equals( right ) )
-            {
-                return 1;
-            }
-            return left.compareTo( right );
+            /* Do not influence the order, to keep as close to the order the archetype author defined */
+            return 0;
         }
     }
     

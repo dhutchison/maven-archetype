@@ -67,4 +67,28 @@ public class RequiredPropertyComparatorTest
         Collections.sort( requiredProperties, requiredPropertyComparator );
         assertEquals( Arrays.asList( "prop2", "prop1" ), requiredProperties );
     }
+
+    /**
+     * Test that checks that properties which do not depend on other items, or are at least
+     * defined in the correct order, do not move when the collection is sorted.
+     */
+    public void testShouldNotSortPropertiesWithoutDependencies()
+    {
+
+        archetypeConfiguration.addRequiredProperty( "a-prop" );
+        archetypeConfiguration.addRequiredProperty( "groupId" );
+        archetypeConfiguration.setDefaultProperty( "groupId", "com.example" );
+        archetypeConfiguration.addRequiredProperty( "artifactId" );
+        archetypeConfiguration.setDefaultProperty( "artifactId", "test-${a-prop}" );
+        /* The following two properties are in the wrong order, so should sort */
+        archetypeConfiguration.addRequiredProperty( "package" );
+        archetypeConfiguration.setDefaultProperty( "package", "${groupId}.${artifactId}.${z-prop}" );
+        archetypeConfiguration.addRequiredProperty( "z-prop" );
+
+        List<String> requiredProperties = archetypeConfiguration.getRequiredProperties();
+        assertEquals( Arrays.asList( "a-prop", "groupId", "artifactId", "package", "z-prop" ), requiredProperties );
+        /* Sort then check the results */
+        Collections.sort( requiredProperties, requiredPropertyComparator );
+        assertEquals( Arrays.asList( "a-prop", "groupId",  "artifactId", "z-prop", "package" ), requiredProperties );
+    }
 }
